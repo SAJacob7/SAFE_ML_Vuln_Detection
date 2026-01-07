@@ -3,7 +3,7 @@ from parameters import Flags
 import sys
 import os
 import numpy as np
-from utils import utils
+from safe_utils import utils
 import traceback
 
 

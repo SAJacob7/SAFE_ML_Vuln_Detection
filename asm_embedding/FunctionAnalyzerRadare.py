@@ -3,6 +3,7 @@
 
 import json
 import r2pipe
+import traceback
 
 
 class RadareFunctionAnalyzer:
@@ -96,7 +97,8 @@ class RadareFunctionAnalyzer:
         if self.use_symbol:
             s = my_function['vaddr']
         else:
-            s = my_function['offset']
+            # radare2 uses 'addr' on my system
+            s = my_function.get('offset', my_function.get('addr'))
         calls = RadareFunctionAnalyzer.get_callref(my_function, depth)
         self.r2.cmd('s ' + str(s))
 
@@ -168,22 +170,30 @@ class RadareFunctionAnalyzer:
                 if self.use_symbol:
                     functions_dict[my_function['vaddr']] = my_function
                 else:
-                    functions_dict[my_function['offset']] = my_function
+                    key_addr = my_function.get('offset', my_function.get('addr'))
+                    functions_dict[key_addr] = my_function
+                    # functions_dict[my_function['offset']] = my_function
+
 
         result = {}
         for my_function in function_list:
             if self.use_symbol:
                 address = my_function['vaddr']
             else:
-                address = my_function['offset']
+                address = my_function.get('offset', my_function.get('addr'))
 
             try:
                 instructions, asm = self.function_to_inst(functions_dict, my_function, self.top_depth)
-                result[my_function['name']] = {'filtered_instructions': instructions, "asm": asm, "address": address}
-            except:
+                result[my_function['name']] = {
+                    'filtered_instructions': instructions,
+                    "asm": asm,
+                    "address": address
+                }
+            except Exception as e:
                 print("Error in functions: {} from {}".format(my_function['name'], self.filename))
-                pass
+                traceback.print_exc()
         return result
+
 
     def close(self):
         self.r2.quit()

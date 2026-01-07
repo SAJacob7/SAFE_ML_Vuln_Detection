@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 from asm_embedding.FunctionNormalizer import FunctionNormalizer
 from asm_embedding.InstructionsConverter import InstructionsConverter
 from neural_network.SAFEEmbedder import SAFEEmbedder
-from utils import utils
+from safe_utils import utils
 
 class SAFE:
 
@@ -21,18 +21,32 @@ class SAFE:
     def embedd_function(self, filename, address):
         analyzer = RadareFunctionAnalyzer(filename, use_symbol=False, depth=0)
         functions = analyzer.analyze()
+
+        print("DEBUG: functions returned by analyzer:")
+        for name, data in functions.items():
+            print(name, "-> address:", data.get("address"))
+
         instructions_list = None
         for function in functions:
-            if functions[function]['address'] == address:
+            func_addr = functions[function].get('address')
+            if func_addr is None:
+                continue
+
+            # Normalize both to int
+            if int(func_addr) == int(address):
+                print(f"DEBUG: matched function {function} at address {hex(func_addr)}")
                 instructions_list = functions[function]['filtered_instructions']
                 break
+
         if instructions_list is None:
             print("Function not found")
             return None
+
         converted_instructions = self.converter.convert_to_ids(instructions_list)
         instructions, length = self.normalizer.normalize_functions([converted_instructions])
         embedding = self.embedder.embedd(instructions, length)
         return embedding
+
 
 
 if __name__ == '__main__':

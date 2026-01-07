@@ -3,7 +3,7 @@
 
 import argparse
 from dataset_creation import DatabaseFactory, DataSplitter, FunctionsEmbedder
-from utils.utils import print_safe
+from safe_utils.utils import print_safe
 
 
 def debug_msg():
